@@ -1,0 +1,21 @@
+<launch>
+
+        
+    <arg name="dev" default="/dev/input/js1" />
+    <node pkg="joy" type="joy_node" name="joy" ns="robot">
+        <param name="dev" value="$(arg dev)" />
+    </node>
+    <node pkg="teleop_twist_joy" type="teleop_node" name="twist" ns="robot">
+        <param name="axis_linear" value="4" />
+        <param name="scale_linear" value="1.0" />
+        <param name="axis_angular" value="0" />
+        <param name="scale_angular" value="1.0" />
+    </node>
+    <!--node pkg="arduinoday" type="diff_drive.py" name="wheel_power" / -->
+    
+        <!-- Diagnostic Aggregator -->
+    <arg name="port" default="/dev/ttyACM0" />
+    <node pkg="rosserial_python" type="serial_node.py" name="serial_node">
+        <param name="port" value="$(arg port)" />
+    </node>
+</launch>
