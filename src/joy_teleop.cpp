@@ -4,10 +4,10 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <sensor_msgs/Joy.h>
 
-class TeleopRobot
+class TeleopRobocar
 {
 public:
-  TeleopRobot();
+  TeleopRobocar();
 
   ros::Timer timer;
   
@@ -36,57 +36,67 @@ private:
 };
 
 
-TeleopRobot::TeleopRobot():
+TeleopRobocar::TeleopRobocar():
   linear_(5),
   brake_(2),
   angular_(0)
 {
 
-  nh_.param("axis_linear", linear_, linear_);
-  nh_.param("axis_brake", brake_, brake_);
-  nh_.param("scale_linear", l_scale_, l_scale_);
-  nh_.param("offset_linear", l_offset_, l_offset_);
+  nh_.param<int>("axis_linear", linear_, 5);
+  nh_.param<int>("axis_brake", brake_, 2);
+  nh_.param<double>("scale_linear", l_scale_, -0.5);
+  nh_.param<double>("offset_linear", l_offset_, 0.5);
 
   
-  nh_.param("axis_angular", angular_, angular_);
+  nh_.param<int>("axis_angular", angular_, 0);
 
-  nh_.param("scale_angular", a_scale_, a_scale_);
+  nh_.param<double>("scale_angular", a_scale_, -0.34);
 
 
 
   vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
   velStamped_pub_ = nh_.advertise<geometry_msgs::TwistStamped>("/stamped_cmd_vel", 1);
   
-  joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 10, &TeleopRobot::joyCallback, this);
+  joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 1, &TeleopRobocar::joyCallback, this);
 
  
 }
 
-void TeleopRobot::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
+void TeleopRobocar::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
 
-  twist.angular.z = joy->axes[angular_];
-  double acceleration = joy->axes[linear_] * l_scale_ + l_offset_;
-  double reverse = joy->axes[brake_] * l_scale_ + l_offset_;
+  twist.angular.z = joy->axes[angular_] * a_scale_;
+
+  double acceleration = l_scale_ * joy->axes[linear_] + l_offset_;
+  ROS_DEBUG("%f", acceleration);
+
+  double reverse = l_scale_ * joy->axes[brake_] + l_offset_;
+  ROS_DEBUG("%f", reverse);
+  
   twist.linear.x = acceleration - reverse;
   
-  vel_pub_.publish(twist);
+  ROS_DEBUG("%f", twist.linear.x);
+  
+  // vel_pub_.publish(twist);
 }
 
-void TeleopRobot::timerCallback(const ros::TimerEvent& event)
+void TeleopRobocar::timerCallback(const ros::TimerEvent& event)
 {
   stamped.twist = twist;
   stamped.header.stamp = ros::Time::now();
 
+  vel_pub_.publish(twist);
   velStamped_pub_.publish(stamped);
 }
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "teleop_robot");
-  TeleopRobot teleop_turtle;
-  // 50 hz timer for publishing twist stamped
-  teleop_turtle.timer = teleop_turtle.nh_.createTimer(ros::Duration(0.02),&TeleopRobot::timerCallback, &teleop_turtle);
+  ros::init(argc, argv, "joy_teleop");
+  TeleopRobocar teleop_joy;
+  // 20 hz timer for publishing twist stamped
+  teleop_joy.timer = teleop_joy.nh_.createTimer(ros::Duration(0.05),&TeleopRobocar::timerCallback, &teleop_joy);
+  //teleop_joy.timer = teleop_joy.nh_.createTimer(ros::Duration(0.02),&TeleopRobocar::timerCallback, &teleop_joy);
+
 
   ros::spin();
 }

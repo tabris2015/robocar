@@ -1,15 +1,15 @@
 
 // #define USE_MOTOR_DRIVER_I2C
 
-#include <RTIMULib.h>
+// #include <RTIMULib.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/Twist.h> // para el control
-#if defined(USE_MOTOR_DRIVER_I2C)
-    // libreria para el motor i2c
-    #include "motor_driver_i2c.h" 
-    #define MOTORS_ADD 0x0f
-#endif
+// #if defined(USE_MOTOR_DRIVER_I2C)
+//     // libreria para el motor i2c
+//     #include "motor_driver_i2c.h" 
+//     #define MOTORS_ADD 0x0f
+// #endif
 #include <sensor_msgs/Range.h> // para el sensor
 // libreria para el sensor laser
 #include "VL53L0X.h"

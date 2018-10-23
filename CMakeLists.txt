@@ -43,16 +43,20 @@ target_link_libraries(joy_teleop
 
 add_dependencies(joy_teleop robocar_generate_messages_cpp)
 
-# i2c sensors
-add_executable(i2c_hub 
-              src/i2c_hub.cpp
-              src/motor_driver_i2c.cpp
-              src/VL53L0X.cpp
-              src/I2Cdev.cpp
-              )
+# # i2c sensors
+# add_executable(i2c_hub 
+#               src/i2c_hub.cpp
+#               src/motor_driver_i2c.cpp
+#               src/VL53L0X.cpp
+#               src/I2Cdev.cpp
+#               )
 
-target_link_libraries(i2c_hub 
-              ${catkin_LIBRARIES}
-              RTIMULib    # libreria para la IMU
-              )
+# target_link_libraries(i2c_hub 
+#               ${catkin_LIBRARIES}
+#               RTIMULib    # libreria para la IMU
+#               )
 
+
+# laser node
+add_executable(laser_node src/laser_node.cpp src/VL53L0X.cpp src/I2Cdev.cpp)
+target_link_libraries(laser_node ${catkin_LIBRARIES})
