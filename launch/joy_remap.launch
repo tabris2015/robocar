@@ -1,15 +1,15 @@
-<launch>
-
-        
+<launch>   
     <!-- Publish wheel odometry from MCU encoder data -->
     <arg name="dev" default="/dev/input/js0" />
     <node pkg="joy" type="joy_node" name="joy" ns="robot">
         <param name="dev" value="$(arg dev)" />
     </node>
     <node pkg="teleop_twist_joy" type="teleop_node" name="twist" ns="robot">
-        <param name="axis_linear" value="4" />
-        <param name="scale_linear" value="1.0" />
+        <param name="axis_linear" value="5" />
+        <param name="axis_brake" value="2" />
+        <param name="scale_linear" value="-0.5" />
+        <param name="offset_linear" value="0.5" />
         <param name="axis_angular" value="0" />
-        <param name="scale_angular" value="1.0" />
+        <param name="scale_angular" value="-0.34" />
     </node>
 </launch>

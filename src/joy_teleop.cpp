@@ -17,8 +17,14 @@ public:
 private:
   void joyCallback(const sensor_msgs::Joy::ConstPtr& joy);
 
-  int linear_, brake_, angular_;
-  double l_scale_, a_scale_;
+  int linear_;      // axis id
+  int brake_;
+  int angular_;
+
+  double l_scale_;
+  double a_scale_;
+  double l_offset_;
+
   ros::Publisher vel_pub_;
   ros::Publisher velStamped_pub_;
   ros::Subscriber joy_sub_;
@@ -37,15 +43,20 @@ TeleopRobot::TeleopRobot():
 {
 
   nh_.param("axis_linear", linear_, linear_);
-  nh_.param("axis_angular", angular_, angular_);
-  nh_.param("scale_angular", a_scale_, a_scale_);
+  nh_.param("axis_brake", brake_, brake_);
   nh_.param("scale_linear", l_scale_, l_scale_);
+  nh_.param("offset_linear", l_offset_, l_offset_);
 
-
-  vel_pub_ = nh_.advertise<geometry_msgs::Twist>("robot/cmd_vel", 1);
-  velStamped_pub_ = nh_.advertise<geometry_msgs::TwistStamped>("robot/stamped_cmd_vel", 1);
   
+  nh_.param("axis_angular", angular_, angular_);
 
+  nh_.param("scale_angular", a_scale_, a_scale_);
+
+
+
+  vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+  velStamped_pub_ = nh_.advertise<geometry_msgs::TwistStamped>("/stamped_cmd_vel", 1);
+  
   joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 10, &TeleopRobot::joyCallback, this);
 
  
@@ -55,7 +66,9 @@ void TeleopRobot::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
 
   twist.angular.z = joy->axes[angular_];
-  twist.linear.x = (joy->axes[linear_] * (-0.5) + 0.5) + (joy->axes[brake_] - 1);
+  double acceleration = joy->axes[linear_] * l_scale_ + l_offset_;
+  double reverse = joy->axes[brake_] * l_scale_ + l_offset_;
+  twist.linear.x = acceleration - reverse;
   
   vel_pub_.publish(twist);
 }
