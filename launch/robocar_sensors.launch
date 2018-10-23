@@ -8,7 +8,7 @@
         <param name="height" value="240"/>
         <!-- We are running at 90fps to reduce motion blur -->
         <param name="framerate" value="90"/>
-
+        <param name="hFlip" value="true"/>
         <param name="camera_frame_id" value="front_cam"/>
 
     </node>
