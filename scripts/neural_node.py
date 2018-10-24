@@ -55,7 +55,7 @@ class AutoPilot:
         
         # get ros params
         self.img_topic = rospy.get_param('img_topic', default='/camera/image/compressed')
-        self.output_topic = rospy.get_param('output_topic', default='/cnn_output')
+        self.output_topic = rospy.get_param('output_topic', default='/neural_output')
         self.model_name = rospy.get_param('model', default=model_path)
 
         ## cargar la red neuronal en la memoria 

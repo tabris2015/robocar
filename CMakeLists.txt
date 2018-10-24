@@ -60,3 +60,8 @@ add_dependencies(joy_teleop robocar_generate_messages_cpp)
 # laser node
 add_executable(laser_node src/laser_node.cpp src/VL53L0X.cpp src/I2Cdev.cpp)
 target_link_libraries(laser_node ${catkin_LIBRARIES})
+
+
+# pilot node
+add_executable(pilot_node src/pilot_node.cpp)
+target_link_libraries(pilot_node ${catkin_LIBRARIES})

@@ -12,7 +12,6 @@ import csv
 
 class ObstacleDetector:
     idx = 0
-    joy_topic = 'joy'
     # model_name = '/home/pepe/catkin_ws/src/robocar/scripts/simple2'
     dim = (224, 224)
 
@@ -21,6 +20,7 @@ class ObstacleDetector:
 
     def __init__(self, folder):
         # get ros params
+        rospy.loginfo("Obstacle node init")
         self.range_topic = rospy.get_param('range_topic', default='/laser')
         self.output_topic = rospy.get_param('output_topic', default='/obstacle_output')
         self.stop_distance = rospy.get_param('stop_distance', default=0.15)
