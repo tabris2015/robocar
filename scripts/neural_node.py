@@ -9,7 +9,7 @@ import numpy as np
 import rospy
 import cv2
 import message_filters
-from std_msgs.msg import String
+from std_msgs.msg import String, Float32
 from sensor_msgs.msg import Image, Range, CompressedImage, Joy
 from geometry_msgs.msg import Twist, TwistStamped
 from cv_bridge import CvBridge, CvBridgeError
@@ -40,22 +40,24 @@ from models import custom_loss
 import imutils
 
 
-
 class AutoPilot:
     idx = 0
-    img_topic = '/camera/image/compressed'
-    #img_topic = '/usb_cam/image_raw/compressed'
-    twist_topic = '/robot/cmd_vel'
-    sign_topic = '/robot/sign_event'
-    joy_topic = 'joy'
-    model_name = '/home/pepe/catkin_ws/src/robocar/scripts/simple2'
+    
     dim = (224, 224)
 
     linear = 0
     angular_joy = 0
 
     def __init__(self, folder):
+        rospack = rospkg.RosPack()
+        pack_path = rospack.get_path('robocar')
+        model_path = pack_path + '/scripts/simple2'
         
+        # get ros params
+        self.img_topic = rospy.get_param('img_topic', default='/camera/image/compressed')
+        self.output_topic = rospy.get_param('output_topic', default='/cnn_output')
+        self.model_name = rospy.get_param('model', default=model_path)
+
         ## cargar la red neuronal en la memoria 
         # load json and create model
         json_file = open(self.model_name + '.json', 'r')
@@ -71,11 +73,11 @@ class AutoPilot:
         self.graph = tf.get_default_graph()
 
         print('creando subs y pubs...')
+        # image subscriber for the predictor
         self.image_sub = rospy.Subscriber(self.img_topic, CompressedImage, self.imCallback, queue_size=1)
-        self.sign_sub = rospy.Subscriber(self.sign_topic, String, self.signCallback, queue_size=1)
-        self.joy_sub = rospy.Subscriber(self.joy_topic, Joy, self.joyCallback, queue_size=1)
-
-        self.twist_pub = rospy.Publisher(self.twist_topic, Twist, queue_size=1)
+        
+        # float32 publisher for output 
+        self.output_pub = rospy.Publisher(self.output_topic, Float32, queue_size=1)
     
     #this callback executes when the two subscribers sync
     def imCallback(self, img):
@@ -90,35 +92,25 @@ class AutoPilot:
         x = np_image.reshape((1,) + np_image.shape)  # this is a Numpy array with shape (1, h,w, c)
         #print (x.shape)
         # obtiene la prediccion de la red neuronal
-        
+        angular = 0.0
         with self.graph.as_default():
             angular = self.model.predict(x, batch_size=1, verbose=0)
+
         angular = np.asscalar(angular.flatten())
         #print ("prediccion: ", angular)
         # crea el mensaje para el control del carro y publica 
-        msg = Twist()
-        # permite control manual en caso de emergencia
-        if abs(self.angular_joy) < 0.1:
-            msg.angular.z = angular
-        else:
-            msg.angular.z = self.angular_joy
+        # msg = Twist()
+        
+        # msg.angular.z = angular
+        # self.twist_pub.publish(msg)
 
-        msg.linear.x = self.linear
-        self.twist_pub.publish(msg)
-    
-    def signCallback(self, event):
-        # este callback debe implementar la logica de control
-        # para signos de transito, en principio, solo ALTO
-        pass
-    
-    def joyCallback(self, joy):
-        #control manual de velocidad con el joystick
-        self.angular_joy = joy.axes[0]
-        self.linear = (joy.axes[5] * (-0.5) + 0.5) + (joy.axes[2] - 1)
-        #print(self.linear)
+        output_msg = Float32()
+        output_msg.data = angular
+        self.output_pub.publish(output_msg)
+
         
 def main(args):
-    rospy.init_node('autopilot', anonymous=True)
+    rospy.init_node('neural_node', anonymous=True)
     stamper = AutoPilot(None)
 
     try:
