@@ -17,6 +17,9 @@ class ObstacleDetector:
 
     linear = 0
     angular_joy = 0
+    max_acc = 0.3
+
+    kp = 4.0
 
     def __init__(self, folder):
         # get ros params
@@ -35,9 +38,18 @@ class ObstacleDetector:
         """ este calback recibe el rango del sensor y calcula la salida 
         correspondiente
         """
-        acceleration = msg.range if msg.range < 1.0 else 1.0
+        error = msg.range - self.stop_distance
 
-        acceleration = 0 if acceleration <= self.stop_distance else acceleration
+        error = error * 2 if error < 0 else error 
+
+        acceleration = self.kp * error
+
+
+        acceleration = self.max_acc if acceleration > self.max_acc else acceleration
+
+        acceleration = -self.max_acc * 2 if acceleration < -self.max_acc else acceleration
+
+        acceleration = 0 if (acceleration < (self.stop_distance + 0.03)) and (acceleration > (self.stop_distance - 0.01)) else acceleration
 
         out_msg = Float32()
         out_msg.data = acceleration

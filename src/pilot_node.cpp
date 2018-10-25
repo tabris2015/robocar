@@ -7,6 +7,8 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <sensor_msgs/Joy.h>
 
+#include <cmath>
+
 class Pilot
 {
 
@@ -115,7 +117,7 @@ void Pilot::JoyTwistCallback(const geometry_msgs::Twist::ConstPtr &joy_twist)
 
 void Pilot::TimerCallback(const ros::TimerEvent &event)
 {
-    if(manual_)
+    if(abs(manual_twist_msg_.linear.x) > 0.01 || abs(manual_twist_msg_.angular.z) > 0.01)
     {
         twist_cmd_pub_.publish(manual_twist_msg_);
         manual_ = false;

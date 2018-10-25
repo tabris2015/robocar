@@ -17,13 +17,13 @@
         <param name="axis_angular" value="0" />
         <param name="scale_angular" type="double" value="0.34" />
 
-        <param name="output_topic" type="string" value="/joy_cmd_vel">
+        <param name="output_topic" type="string" value="/joy_cmd_vel"/>
 
     </node>
     <!-- deteccion de obstaculos -->
     <node pkg="robocar" type="obstacle_node.py" name="obstacle_node">
 
-        <param name="range_topic" type="string" value="/laser">
+        <param name="range_topic" type="string" value="/laser"/>
         <!-- default values -->
     </node>
 
