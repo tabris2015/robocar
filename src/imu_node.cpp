@@ -24,7 +24,7 @@ float last_yaw;
 
 float integral_term = 0;
 
-float kp=1, ki=0.005, kd=0.7;
+float kp=1, ki=0, kd=0;
 
 //
 // MotorDriverI2c * motors_ptr;
@@ -45,6 +45,9 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "imu_node");
     ROS_INFO("imu node up!");
     ros::NodeHandle nh("~");
+    nh.param<float>("kp", kp, 1);
+    nh.param<float>("ki", ki, 0);
+    nh.param<float>("kd", kd, 0);
 
     std::string calibration_file_path;
     if(!nh.getParam("calibration_file_path", calibration_file_path))
