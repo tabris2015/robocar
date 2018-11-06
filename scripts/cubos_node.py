@@ -67,7 +67,7 @@ class CubosDetector:
     cBlue = []
     cRed = []
 
-
+    last_color_deviations = {}
     last_state = 0
 
     first = False
@@ -162,6 +162,7 @@ class CubosDetector:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 # self.current_color = "green"
                 self.color_last_center['green'] = (cX, cY)
+                self.last_color_deviations['green'] = self.color_deviations['green']
             # error = self.color_deviations['green'] * 0.003
                 # calculo la salida
 
@@ -183,6 +184,7 @@ class CubosDetector:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 # self.current_color = "blue"
                 self.color_last_center['blue'] = (cX, cY)
+                self.last_color_deviations['blue'] = self.color_deviations['blue']
 
         # print(len(self.color_areas.keys()), "objetos en escena")
         
@@ -201,18 +203,19 @@ class CubosDetector:
             ctrl_msg.linear.x = 0.1
             self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
 
+
         else:
 
             if (
                 (self.current_color == "green") and 
-                (abs(self.color_deviations["green"]) < 50) and 
+                (abs(self.last_color_deviations["green"]) < 50) and 
                 (self.color_last_center["green"][1] > 200)
                 ):
                 print("conseguido cubo VERDE!")
 
             elif (
                 (self.current_color == "blue") and 
-                (abs(self.color_deviations["blue"]) < 50) and
+                (abs(self.last_color_deviations["blue"]) < 50) and
                 (self.color_last_center["blue"][1] > 200)
                 ):
                 print("conseguido cubo AZUL!")
