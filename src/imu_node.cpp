@@ -152,7 +152,7 @@ int main(int argc, char **argv)
             output = kp * error + integral_final + kd * derivative_term;
             
             geometry_msgs::Twist twist;
-            twist.angular.z = output;
+            twist.angular.z = -output;
             twist_pub.publish(twist);
 
             imu_pub.publish(imu_msg);
