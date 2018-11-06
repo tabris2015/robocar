@@ -203,13 +203,13 @@ class CubosDetector:
 
         else:
 
-            if (self.current_color == "green") and 
-                (abs(self.color_deviations["green"]) < 50) and 
+            if (self.current_color == "green") and \ 
+                (abs(self.color_deviations["green"]) < 50) and \ 
                 (self.color_last_center["green"][1] > 200):
                 print("conseguido cubo VERDE!")
 
-            elif (self.current_color == "blue") and 
-                (abs(self.color_deviations["blue"]) < 50) and 
+            elif (self.current_color == "blue") and \
+                (abs(self.color_deviations["blue"]) < 50) and \
                 (self.color_last_center["blue"][1] > 200):
                 print("conseguido cubo AZUL!")
 
