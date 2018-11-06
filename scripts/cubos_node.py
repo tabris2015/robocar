@@ -104,8 +104,8 @@ class CubosDetector:
 
         for color, bounds in self.colors_dic.iteritems():
 
-            mask=cv2.inRange(imgHSV,bounds[0],bounds[1])
-            
+            mask=cv2.inRange(imgHSV,np.array(bounds[0]),np.array(bounds[1]))
+
             self.current_color = color[0]
             
             kernelOpen=np.ones((6,6))
