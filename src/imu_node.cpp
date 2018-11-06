@@ -23,7 +23,7 @@ float curr_heading;
 
 float integral_term = 0;
 
-float kp=1, ki=0.01, kd=0.1;
+float kp=0.8, ki=0.01, kd=0.3;
 
 //
 // MotorDriverI2c * motors_ptr;
