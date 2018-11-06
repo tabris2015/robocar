@@ -144,6 +144,19 @@ class CubosDetector:
 
         im2, contsBlue, hierarchy = cv2.findContours(maskBlueFinal.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
 
+        # Blue
+        maskRed1=cv2.inRange(imgHSV,np.array(self.colors_dic['r1'][0]),np.array(self.colors_dic['r1'][1]))
+        maskRed2=cv2.inRange(imgHSV,np.array(self.colors_dic['r2'][0]),np.array(self.colors_dic['r2'][1]))
+        
+        maskRed=cv2.bitwise_or(maskRed1, maskRed2)
+        
+        maskOpen=cv2.morphologyEx(maskRed,cv2.MORPH_OPEN,kernelOpen)
+        maskClose=cv2.morphologyEx(maskOpen,cv2.MORPH_CLOSE,kernelClose)
+
+        maskRedFinal = maskClose
+
+        im2, contsRed, hierarchy = cv2.findContours(maskRedFinal.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+
 
         if contsGreen:
             cGreen = max(contsGreen, key = cv2.contourArea)
@@ -187,6 +200,26 @@ class CubosDetector:
                 self.color_last_center['blue'] = (cX, cY)
                 self.last_color_deviations['blue'] = self.color_deviations['blue']
 
+
+        if contsRed:
+            cRed = max(contsRed, key = cv2.contourArea)
+            area = int(cv2.contourArea(cRed))
+            if area > 220:
+                self.color_areas['red'] = area
+                M = cv2.moments(cRed)
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+                cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
+                area_txt = str(area)
+                self.color_deviations['red'] = int(160 - cX)           #<-----------
+                deviation_txt = str(self.color_deviations['red'])
+                cv2.putText(img, area_txt, (cX - 20, cY - 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                cv2.putText(img, deviation_txt, (cX - 20, cY + 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                # self.current_color = "red"
+                self.color_last_center['red'] = (cX, cY)
+                self.last_color_deviations['red'] = self.color_deviations['red']
         # print(len(self.color_areas.keys()), "objetos en escena")
         
 
@@ -208,21 +241,29 @@ class CubosDetector:
         else:
 
             if (
-                (self.current_color == "green") and 
-                (abs(self.last_color_deviations["green"]) < 50) and 
-                (self.color_last_center["green"][1] > 200)
+                    (self.current_color == "green") and 
+                    (abs(self.last_color_deviations["green"]) < 50) and 
+                    (self.color_last_center["green"][1] > 200)
                 ):
                 print("conseguido cubo VERDE!")
 
                 self.cube_color_pub.publish("G")
 
             elif (
-                (self.current_color == "blue") and 
-                (abs(self.last_color_deviations["blue"]) < 50) and
-                (self.color_last_center["blue"][1] > 200)
+                    (self.current_color == "blue") and 
+                    (abs(self.last_color_deviations["blue"]) < 50) and
+                    (self.color_last_center["blue"][1] > 200)
                 ):
                 print("conseguido cubo AZUL!")
                 self.cube_color_pub.publish("B")
+
+            elif (
+                    (self.current_color == "red") and 
+                    (abs(self.last_color_deviations["red"]) < 50) and
+                    (self.color_last_center["red"][1] > 200)
+                ):
+                print("conseguido cubo ROJO!")
+                self.cube_color_pub.publish("R")
 
             self.first = True
 
