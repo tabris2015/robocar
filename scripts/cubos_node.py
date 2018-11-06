@@ -121,7 +121,9 @@ class CubosDetector:
 
         # lee la imagen y la preprocesa
         img = cv2.imdecode(np.fromstring(img.data, np.uint8),cv2.IMREAD_COLOR)
-        
+        ## para deteccion de linea
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
         imgHSV= cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
         # detectar los 3 colores
         # green
@@ -236,8 +238,6 @@ class CubosDetector:
             ctrl_msg.angular.z = error
             ctrl_msg.linear.x = 0.1
             self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
-
-
         else:
 
             if (
@@ -268,6 +268,29 @@ class CubosDetector:
             self.first = True
 
         self.output_pub.publish(ctrl_msg)
+        ########################################################################
+        ############ LINE FOLLOWING ############################################
+        ########################################################################
+        blur = cv2.GaussianBlur(gray,(5,5),0)
+        ret,thresh = cv2.threshold(blur,60,255,cv2.THRESH_BINARY_INV)
+        contours,hierarchy = cv2.findContours(thresh.copy(), 1, cv2.CHAIN_APPROX_NONE)
+        if len(contours) > 0:
+            c = max(contours, key=cv2.contourArea)
+            M = cv2.moments(c)
+            cx = int(M['m10']/M['m00'])
+            cy = int(M['m01']/M['m00'])
+            cv2.line(img,(cx,0),(cx,720),(255,0,0),1)
+            cv2.line(img,(0,cy),(1280,cy),(255,0,0),1)
+            cv2.drawContours(img, contours, -1, (0,255,0), 1)
+            if cx >= 120:
+                print("Turn Left!")
+            if cx < 120 and cx > 50:
+                print("On Track!")
+            if cx <= 50:
+                print("Turn Right")
+
+            self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
+                
         
 
     def feedbackCallback(self, twist):
