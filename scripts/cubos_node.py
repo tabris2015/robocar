@@ -14,30 +14,30 @@ from sensor_msgs.msg import Image, Range, CompressedImage, Joy
 from geometry_msgs.msg import Twist, TwistStamped
 from cv_bridge import CvBridge, CvBridgeError
 
-from keras.preprocessing.image import load_img
-from keras.preprocessing.image import img_to_array
+# from keras.preprocessing.image import load_img
+# from keras.preprocessing.image import img_to_array
 
-from keras.models import model_from_json
+# from keras.models import model_from_json
 
-import pandas as pd
+# import pandas as pd
 import threading
 
-import tensorflow as tf
+# import tensorflow as tf
 import os
 import sys
 import glob
 import shutil
 
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten
-from keras.layers import Conv2D, MaxPooling2D
-from keras import backend as K
-from keras.callbacks import TensorBoard, ModelCheckpoint
+# from keras.models import Sequential
+# from keras.layers import Dense, Dropout, Flatten
+# from keras.layers import Conv2D, MaxPooling2D
+# from keras import backend as K
+# from keras.callbacks import TensorBoard, ModelCheckpoint
 
-from keras.utils import plot_model
-import models
-from models import custom_loss
-import imutils
+# from keras.utils import plot_model
+# import models
+# from models import custom_loss
+# import imutils
 
 
 class CubosDetector:
