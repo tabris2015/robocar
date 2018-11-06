@@ -138,7 +138,6 @@ int main(int argc, char **argv)
 
             error = setpoint - yaw;
 
-            ROS_INFO_STREAM("yaw: " << yaw << " error: " << error);
             
             integral_term += error;
             float i_wu = 10.0;
@@ -155,6 +154,8 @@ int main(int argc, char **argv)
             if(abs(output) < 0.01)
                 output = 0;
 
+            ROS_INFO_STREAM("i: " << yaw << " e: " << error << " o: " << output);
+            
             geometry_msgs::Twist twist;
             twist.angular.z = -output;
             twist_pub.publish(twist);
