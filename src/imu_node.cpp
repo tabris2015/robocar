@@ -20,6 +20,7 @@ float last_error;
 float output;
 float setpoint;
 float curr_heading;
+float last_yaw;
 
 float integral_term = 0;
 
@@ -138,9 +139,9 @@ int main(int argc, char **argv)
             
             integral_term += error;
 
-            float derivative_term = (error - last_error);
+            float derivative_term = (yaw - last_yaw);
             
-            last_error = error;
+            last_yaw = yaw;
             
             float integral_final = integral_term * ki;
             
