@@ -273,7 +273,7 @@ class CubosDetector:
         ########################################################################
         blur = cv2.GaussianBlur(gray,(5,5),0)
         ret,thresh = cv2.threshold(blur,60,255,cv2.THRESH_BINARY_INV)
-        contours,hierarchy = cv2.findContours(thresh.copy(), 1, cv2.CHAIN_APPROX_NONE)
+        im3,contours,hierarchy = cv2.findContours(thresh.copy(), 1, cv2.CHAIN_APPROX_NONE)
         if len(contours) > 0:
             c = max(contours, key=cv2.contourArea)
             M = cv2.moments(c)
