@@ -1,0 +1,21 @@
+<launch>
+  <node type="usb_cam_node" pkg="usb_cam" name="webcam" >
+    
+    <!-- <param name="camera_info_url" value="package://raspicam_node/camera_info/camerav2_1280x720.yaml"/> -->
+    <param name="camera_name" value="front_cam"/>
+    <param name="image_width" value="320"/>
+    <param name="image_height" value="240"/>
+    <!-- We are running at 90fps to reduce motion blur -->
+    <!-- <param name="framerate" value="90"/> -->
+
+    <param name="camera_frame_id" value="front_cam"/>
+
+  </node>
+
+  <node type="cubos_node.py" pkg="robocar" name="cubos" output="screen">
+    
+    <!-- <param name="camera_info_url" value="package://raspicam_node/camera_info/camerav2_1280x720.yaml"/> -->
+    <param name="img_topic" value="/webcam/image_raw/compressed"/>
+
+  </node>
+</launch>

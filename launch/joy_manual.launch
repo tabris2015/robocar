@@ -6,6 +6,8 @@
     </node>
     <node pkg="robocar" type="joy_teleop" name="twist">
 
+        <!-- <param name="output_topic" value="/cmd_vel" /> -->
+        
         <param name="axis_linear" value="5" />
         <param name="axis_brake" value="2" />
 
