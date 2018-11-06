@@ -135,7 +135,7 @@ class CubosDetector:
         cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
         self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
         
-        error = self.deviation * 0.01
+        error = self.deviation * 0.001
         # calculo la salida
         ctrl_msg = Twist()
         ctrl_msg.angular.z = error
