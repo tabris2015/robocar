@@ -5,6 +5,7 @@ import rospkg
 roslib.load_manifest('robocar')
 import sys
 import csv
+import operator
 import numpy as np
 import rospy
 import cv2
@@ -58,6 +59,12 @@ class CubosDetector:
 
     current_color = ''
 
+    color_areas = {}
+    color_deviations = {}
+    cGreen = []
+    cBlue = []
+    cRed = []
+
     def __init__(self, folder):
         rospack = rospkg.RosPack()
         pack_path = rospack.get_path('robocar')
@@ -95,78 +102,86 @@ class CubosDetector:
     def imCallback(self, img):
         """ este calback lee la imagen de la camara, la preprocesa y obtiene 
         una prediccion para el comando de control del robot"""
+        kernelClose=np.ones((20,20))
+        kernelOpen=np.ones((6,6))
+
+        ctrl_msg = Twist()
+        ctrl_msg.angular.z = 0
+        ctrl_msg.linear.x = 0
 
         # lee la imagen y la preprocesa
         img = cv2.imdecode(np.fromstring(img.data, np.uint8),cv2.IMREAD_COLOR)
         
         imgHSV= cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
         # detectar los 3 colores
-
-        for color, bounds in self.colors_dic.iteritems():
-
-            mask=cv2.inRange(imgHSV,np.array(bounds[0]),np.array(bounds[1]))
-
-            self.current_color = color[0]
-            print(self.current_color)
-
-            kernelOpen=np.ones((6,6))
-            kernelClose=np.ones((20,20))
-            maskOpen=cv2.morphologyEx(mask,cv2.MORPH_OPEN,kernelOpen)
-            maskClose=cv2.morphologyEx(maskOpen,cv2.MORPH_CLOSE,kernelClose)
-
-            maskFinal = maskClose
-
-            im2, conts, hierarchy = cv2.findContours(maskFinal.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-            
-            ctrl_msg = Twist()
-            if not conts:
-                ctrl_msg.angular.z = 0
-                ctrl_msg.linear.x = 0
-                self.output_pub.publish(ctrl_msg)
-                print("no conts!")
-                continue
-
-            cv2.drawContours(img,conts,-1,(255,0,0),3)
-            c = max(conts, key = cv2.contourArea)
-            
-            M = cv2.moments(c)
-            cX = int(M["m10"] / M["m00"])
-            cY = int(M["m01"] / M["m00"])
+        # green
+        maskGreen=cv2.inRange(imgHSV,np.array(self.colors_dic['g'][0]),np.array(self.colors_dic['g'][1]))
         
-            # draw the contour and center of the shape on the image
-            cv2.drawContours(img, [c], -1, (0, 255, 0), 2)
-            cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
+        maskOpen=cv2.morphologyEx(maskGreen,cv2.MORPH_OPEN,kernelOpen)
+        maskClose=cv2.morphologyEx(maskOpen,cv2.MORPH_CLOSE,kernelClose)
 
-            area = int(cv2.contourArea(c))
-            if area < 220:
-                ctrl_msg.angular.z = 0
-                ctrl_msg.linear.x = 0
-                self.output_pub.publish(ctrl_msg)
-                continue
+        maskGreenFinal = maskClose
 
-            area_txt = str(area)
-            
-            self.deviation = int(160 - cX)
-
-            deviation_txt = str(self.deviation)
-            cv2.putText(img, area_txt, (cX - 20, cY - 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-            cv2.putText(img, deviation_txt, (cX - 20, cY + 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        im2, contsGreen, hierarchy = cv2.findContours(maskGreenFinal.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
         
+        # Blue
+        maskBlue=cv2.inRange(imgHSV,np.array(self.colors_dic['b'][0]),np.array(self.colors_dic['b'][1]))
+        
+        maskOpen=cv2.morphologyEx(maskBlue,cv2.MORPH_OPEN,kernelOpen)
+        maskClose=cv2.morphologyEx(maskOpen,cv2.MORPH_CLOSE,kernelClose)
 
-            x,y,w,h = cv2.boundingRect(c)
-            # draw the book contour (in green)
-            cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-            self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
-            
-            error = self.deviation * 0.003
-            # calculo la salida
-            
+        maskBlueFinal = maskClose
+
+        im2, contsBlue, hierarchy = cv2.findContours(maskBlueFinal.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+
+
+        if contsGreen:
+            cGreen = max(contsGreen, key = cv2.contourArea)
+            area = int(cv2.contourArea(cGreen))
+            if area > 220:
+                self.color_areas['green'] = area                      # <-----------------
+                M = cv2.moments(cGreen)
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+                cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
+                area_txt = str(area)
+                self.color_deviations['green'] = int(160 - cX)          # <-----------------
+                deviation_txt = str(self.color_deviations['green'])
+                cv2.putText(img, area_txt, (cX - 20, cY - 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                cv2.putText(img, deviation_txt, (cX - 20, cY + 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        
+            # error = self.color_deviations['green'] * 0.003
+                # calculo la salida
+
+        if contsBlue:
+            cBlue = max(contsBlue, key = cv2.contourArea)
+            area = int(cv2.contourArea(cBlue))
+            if area > 220:
+                self.color_areas['blue'] = area
+                M = cv2.moments(cBlue)
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+                cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
+                area_txt = str(area)
+                self.color_deviations['blue'] = int(160 - cX)           #<-----------
+                deviation_txt = str(self.color_deviations['blue'])
+                cv2.putText(img, area_txt, (cX - 20, cY - 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                cv2.putText(img, deviation_txt, (cX - 20, cY + 20),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+
+        if self.color_areas:
+            col = max(self.color_areas.iteritems(), key=operator.itemgetter(1))[0]
+            error = self.color_deviations[col] * 0.003
+
             ctrl_msg.angular.z = error
             ctrl_msg.linear.x = 0.1
-            self.output_pub.publish(ctrl_msg)
-
+            self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
+        
+        self.output_pub.publish(ctrl_msg)
+        
 
     def feedbackCallback(self, twist):
         # llega mensaje
