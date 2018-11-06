@@ -103,6 +103,7 @@ class CubosDetector:
         # float32 publisher for output 
         self.output_pub = rospy.Publisher(self.output_topic, Twist, queue_size=1)
         self.image_pub = rospy.Publisher("/out_image", Image, queue_size=1)
+        self.line_image_pub = rospy.Publisher("/line_image", Image, queue_size=1)
         self.cube_pub = rospy.Publisher("/cube_detected", Bool, queue_size=1)
         self.cube_color_pub = rospy.Publisher("/cube_color", String, queue_size=1)
 
@@ -306,7 +307,7 @@ class CubosDetector:
                 if cx <= 50:
                     print("Turn Right")
 
-            self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
+            self.line_image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
                 
         
 
