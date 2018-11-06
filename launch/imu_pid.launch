@@ -1,5 +1,12 @@
 <launch>
+    <arg name="kp" default="1" />
+    <arg name="ki" default="0" />
+    <arg name="kd" default="0" />
+
     <node pkg="robocar" type="imu_node" name="imu_node" output="screen">
+        <param name="kp" value="$(arg kp)" />
+        <param name="ki" value="$(arg ki)" />
+        <param name="kd" value="$(arg kd)" />
         <param name="calibration_file_path" value="$(find robocar)/config"/>
         <param name="calibration_file_name" value="RTIMULib" />
         <param name="frame_id" value="imu"/>
