@@ -173,7 +173,7 @@ class CubosDetector:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
 
         if self.color_areas:
-            print(len(dict.keys()), "objetos en escena")
+            print(len(self.color_areas.keys()), "objetos en escena")
             col = max(self.color_areas.iteritems(), key=operator.itemgetter(1))[0]
             error = self.color_deviations[col] * 0.003
 
