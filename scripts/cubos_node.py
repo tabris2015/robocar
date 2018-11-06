@@ -104,7 +104,11 @@ class CubosDetector:
 
         im2, conts, hierarchy = cv2.findContours(maskFinal.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
         
-        if not conts: 
+        ctrl_msg = Twist()
+        if not conts:
+            ctrl_msg.angular.z = 0
+            ctrl_msg.linear.x = 0
+            self.output_pub.publish(ctrl_msg)
             print("no conts!")
             return
 
@@ -121,6 +125,9 @@ class CubosDetector:
 
         area = int(cv2.contourArea(c))
         if area < 220:
+            ctrl_msg.angular.z = 0
+            ctrl_msg.linear.x = 0
+            self.output_pub.publish(ctrl_msg)
             return
 
         area_txt = str(area)
@@ -142,7 +149,6 @@ class CubosDetector:
         error = self.deviation * 0.003
         # calculo la salida
         
-        ctrl_msg = Twist()
         ctrl_msg.angular.z = error
         ctrl_msg.linear.x = 0.1
         self.output_pub.publish(ctrl_msg)
