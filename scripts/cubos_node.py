@@ -233,7 +233,7 @@ class CubosDetector:
                 self.first = False
 
             col = max(self.color_areas.iteritems(), key=operator.itemgetter(1))[0]
-            print("siguiendo: ", col)
+            # print("siguiendo: ", col)
             self.current_color = col
             error = self.color_deviations[col] * 0.003
 
@@ -247,7 +247,7 @@ class CubosDetector:
                     (abs(self.last_color_deviations["green"]) < 50) and 
                     (self.color_last_center["green"][1] > 200)
                 ):
-                print("conseguido cubo VERDE!")
+                # print("conseguido cubo VERDE!")
 
                 self.cube_color_pub.publish("G")
 
@@ -256,7 +256,7 @@ class CubosDetector:
                     (abs(self.last_color_deviations["blue"]) < 50) and
                     (self.color_last_center["blue"][1] > 200)
                 ):
-                print("conseguido cubo AZUL!")
+                # print("conseguido cubo AZUL!")
                 self.cube_color_pub.publish("B")
 
             elif (
@@ -264,7 +264,7 @@ class CubosDetector:
                     (abs(self.last_color_deviations["red"]) < 50) and
                     (self.color_last_center["red"][1] > 200)
                 ):
-                print("conseguido cubo ROJO!")
+                # print("conseguido cubo ROJO!")
                 self.cube_color_pub.publish("R")
 
             self.first = True
