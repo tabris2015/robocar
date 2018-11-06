@@ -65,3 +65,8 @@ target_link_libraries(laser_node ${catkin_LIBRARIES})
 # pilot node
 add_executable(pilot_node src/pilot_node.cpp)
 target_link_libraries(pilot_node ${catkin_LIBRARIES})
+
+# imu node
+
+add_executable(imu_node src/imu_node.cpp)
+target_link_libraries(imu_node ${catkin_LIBRARIES} RTIMULib)

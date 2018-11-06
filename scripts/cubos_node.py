@@ -51,7 +51,6 @@ class CubosDetector:
 	([103, 86, 65], [145, 133, 128])    # gray
     ]
 
-
     dim = (224, 224)
     deviation = 0
     linear = 0
@@ -73,21 +72,6 @@ class CubosDetector:
         self.upperBound=np.array([102,255,255])
         self.bridge = CvBridge()
 
-
-        # self.model_name = rospy.get_param('model', default=model_path)
-
-        ## cargar la red neuronal en la memoria 
-        # load json and create model
-        # json_file = open(self.model_name + '.json', 'r')
-        # loaded_model_json = json_file.read()
-        # json_file.close()
-        # self.model = model_from_json(loaded_model_json)
-
-        # load weights into new model
-        # self.model.load_weights(self.model_name + "_best.h5")
-        # print("Loaded model from disk") 
-        # self.model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
-        # self.model.summary()
         # self.graph = tf.get_default_graph()
 
         print('creando subs y pubs...')
