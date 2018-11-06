@@ -153,7 +153,7 @@ int main(int argc, char **argv)
             
 
             output = kp * error + integral_final + kd * derivative_term;
-            if(abs(error) < 0.02)
+            if(abs(output) < 0.01)
                 output = 0;
 
             geometry_msgs::Twist twist;
