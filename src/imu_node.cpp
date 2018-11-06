@@ -16,11 +16,14 @@
 static const double G_TO_MPSS = 9.80665;
 
 float error;
+float last_error;
 float output;
 float setpoint;
 float curr_heading;
 
-float kp, ki, kd;
+float integral_term = 0;
+
+float kp=1, ki=0.01, kd=0.1;
 
 //
 // MotorDriverI2c * motors_ptr;
@@ -64,6 +67,8 @@ int main(int argc, char **argv)
     }
 
     ros::Publisher imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 1);
+    ros::Publisher twist_pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+    
     ros::Subscriber setpoint_sub = nh.subscribe("/angle", 100, angleCallback);
 
     // Load the RTIMULib.ini config file
@@ -131,8 +136,24 @@ int main(int argc, char **argv)
 
             ROS_INFO_STREAM("yaw: " << yaw << " error: " << error);
             
-            output = kp * error;
+            integral_term += error;
+
+            float derivative_term = (error - last_error);
             
+            last_error = error;
+            
+            float integral_final = integral_term * ki;
+            
+            if(integral_final > 10.0) integral_final = 10.0;
+            if(integral_final < -10.0) integral_final = -10.0;
+            
+
+            output = kp * error + integral_final + kd * derivative_term;
+            
+            geometry_msgs::Twist twist;
+            twist.angular.z = output;
+            twist_pub.publish(twist);
+
             imu_pub.publish(imu_msg);
         }
         ros::spinOnce();
