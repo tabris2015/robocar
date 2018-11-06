@@ -104,6 +104,7 @@ class CubosDetector:
         self.output_pub = rospy.Publisher(self.output_topic, Twist, queue_size=1)
         self.image_pub = rospy.Publisher("/out_image", Image, queue_size=1)
         self.cube_pub = rospy.Publisher("/cube_detected", Bool, queue_size=1)
+        self.cube_color_pub = rospy.Publisher("/cube_color", String, queue_size=1)
 
     #this callback executes when the two subscribers sync
     def imCallback(self, img):
@@ -213,12 +214,15 @@ class CubosDetector:
                 ):
                 print("conseguido cubo VERDE!")
 
+                self.cube_color_pub.publish("G")
+
             elif (
                 (self.current_color == "blue") and 
                 (abs(self.last_color_deviations["blue"]) < 50) and
                 (self.color_last_center["blue"][1] > 200)
                 ):
                 print("conseguido cubo AZUL!")
+                self.cube_color_pub.publish("B")
 
             self.first = True
 
