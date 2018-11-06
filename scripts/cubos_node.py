@@ -10,7 +10,7 @@ import numpy as np
 import rospy
 import cv2
 import message_filters
-from std_msgs.msg import String, Float32
+from std_msgs.msg import String, Float32, Bool
 from sensor_msgs.msg import Image, Range, CompressedImage, Joy
 from geometry_msgs.msg import Twist, TwistStamped
 from cv_bridge import CvBridge, CvBridgeError
@@ -51,7 +51,7 @@ class CubosDetector:
 	([25, 146, 190], [62, 174, 250]),   # yellow
 	([103, 86, 65], [145, 133, 128])    # gray
     ]
-
+    
     dim = (224, 224)
     deviation = 0
     linear = 0
@@ -61,10 +61,16 @@ class CubosDetector:
 
     color_areas = {}
     color_deviations = {}
+    color_last_center = {}
+    
     cGreen = []
     cBlue = []
     cRed = []
 
+
+    last_state = 0
+
+    first = False
     def __init__(self, folder):
         rospack = rospkg.RosPack()
         pack_path = rospack.get_path('robocar')
@@ -97,6 +103,7 @@ class CubosDetector:
         # float32 publisher for output 
         self.output_pub = rospy.Publisher(self.output_topic, Twist, queue_size=1)
         self.image_pub = rospy.Publisher("/out_image", Image, queue_size=1)
+        self.cube_pub = rospy.Publisher("/cube_detected", Bool, queue_size=1)
 
     #this callback executes when the two subscribers sync
     def imCallback(self, img):
@@ -153,7 +160,8 @@ class CubosDetector:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 cv2.putText(img, deviation_txt, (cX - 20, cY + 20),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-        
+                # self.current_color = "green"
+                self.color_last_center['green'] = (cX, cY)
             # error = self.color_deviations['green'] * 0.003
                 # calculo la salida
 
@@ -173,16 +181,36 @@ class CubosDetector:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
                 cv2.putText(img, deviation_txt, (cX - 20, cY + 20),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+                # self.current_color = "blue"
+                self.color_last_center['blue'] = (cX, cY)
+
+        print(len(self.color_areas.keys()), "objetos en escena")
+        
 
         if self.color_areas:
-            print(len(self.color_areas.keys()), "objetos en escena")
+            if self.first:
+                self.cube_pub.publish(True)
+                self.first = False
+
             col = max(self.color_areas.iteritems(), key=operator.itemgetter(1))[0]
+            self.current_color = col
             error = self.color_deviations[col] * 0.003
 
             ctrl_msg.angular.z = error
             ctrl_msg.linear.x = 0.1
             self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
-        
+        else:
+            if (self.current_color == "green") and 
+                (abs(self.color_deviations["green"]) < 50) and 
+                (self.color_last_center["green"][1] > 220):
+                print("conseguido cubo VERDE!")
+
+            elif (self.current_color == "blue") and 
+                (abs(self.color_deviations["blue"]) < 50) and 
+                (self.color_last_center["blue"][1] > 220):
+                print("conseguido cubo AZUL!")
+
+            self.first = True
         self.output_pub.publish(ctrl_msg)
         
 
