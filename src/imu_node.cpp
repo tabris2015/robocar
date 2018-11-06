@@ -71,7 +71,7 @@ int main(int argc, char **argv)
     }
 
     ros::Publisher imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 1);
-    ros::Publisher twist_pub = nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+    ros::Publisher twist_pub = nh.advertise<geometry_msgs::Twist>("/angle_cmd_vel", 1);
     
     ros::Subscriber setpoint_sub = nh.subscribe("/angle", 100, angleCallback);
 

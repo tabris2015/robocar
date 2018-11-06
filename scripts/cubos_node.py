@@ -75,7 +75,7 @@ class CubosDetector:
         print("-------------------")
         print(self.img_topic)
         print("-------------------")
-        self.output_topic = rospy.get_param('output_topic', default='/cmd_vel')
+        self.output_topic = rospy.get_param('output_topic', default='/follow_color_cmd_vel')
         self.feedback_topic = rospy.get_param('feedback_topic', default='/real_twist')
         self.lowerGreen=np.array([40,80,40])
         self.upperGreen=np.array([80,255,255])
