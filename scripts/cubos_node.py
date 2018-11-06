@@ -107,7 +107,8 @@ class CubosDetector:
             mask=cv2.inRange(imgHSV,np.array(bounds[0]),np.array(bounds[1]))
 
             self.current_color = color[0]
-            
+            print(self.current_color)
+
             kernelOpen=np.ones((6,6))
             kernelClose=np.ones((20,20))
             maskOpen=cv2.morphologyEx(mask,cv2.MORPH_OPEN,kernelOpen)
@@ -123,7 +124,7 @@ class CubosDetector:
                 ctrl_msg.linear.x = 0
                 self.output_pub.publish(ctrl_msg)
                 print("no conts!")
-                return
+                continue
 
             cv2.drawContours(img,conts,-1,(255,0,0),3)
             c = max(conts, key = cv2.contourArea)
@@ -141,7 +142,7 @@ class CubosDetector:
                 ctrl_msg.angular.z = 0
                 ctrl_msg.linear.x = 0
                 self.output_pub.publish(ctrl_msg)
-                return
+                continue
 
             area_txt = str(area)
             
