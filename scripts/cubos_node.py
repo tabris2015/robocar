@@ -274,41 +274,41 @@ class CubosDetector:
         ############ LINE FOLLOWING ############################################
         ########################################################################
         blur = cv2.GaussianBlur(gray,(5,5),0)
-        # edges = cv2.Canny(blur,50,150,apertureSize = 3)
-        # lines = cv2.HoughLines(edges,1,np.pi/180,200)
+        edges = cv2.Canny(blur,50,150,apertureSize = 3)
+        lines = cv2.HoughLines(edges,1,np.pi/180,200)
 
-        # for rho,theta in lines[0]:
-        #     a = np.cos(theta)
-        #     b = np.sin(theta)
-        #     x0 = a*rho
-        #     y0 = b*rho
-        #     x1 = int(x0 + 1000*(-b))
-        #     y1 = int(y0 + 1000*(a))
-        #     x2 = int(x0 - 1000*(-b))
-        #     y2 = int(y0 - 1000*(a))
+        for rho,theta in lines[0]:
+            a = np.cos(theta)
+            b = np.sin(theta)
+            x0 = a*rho
+            y0 = b*rho
+            x1 = int(x0 + 1000*(-b))
+            y1 = int(y0 + 1000*(a))
+            x2 = int(x0 - 1000*(-b))
+            y2 = int(y0 - 1000*(a))
 
-        #     cv2.line(img,(x1,y1),(x2,y2),(0,0,255),2)
+            cv2.line(img2,(x1,y1),(x2,y2),(0,0,255),2)
 
-        ret,thresh = cv2.threshold(blur,60,255,cv2.THRESH_BINARY_INV)
-        im3,contours,hierarchy = cv2.findContours(thresh.copy(), 1, cv2.CHAIN_APPROX_NONE)
-        if len(contours) > 0:
-            c = max(contours, key=cv2.contourArea)
-            area = int(cv2.contourArea(c))
-            M = cv2.moments(c)
-            cx = int(M['m10']/M['m00'])
-            cy = int(M['m01']/M['m00'])
-            if area > 300 and cy > 100 and cx > 140 and cx < 180:
-                cv2.line(img2,(cx,0),(cx,720),(255,0,0),1)
-                cv2.line(img2,(0,cy),(1280,cy),(255,0,0),1)
-                cv2.drawContours(img2, contours, -1, (0,255,0), 1)
-                if cx >= 120:
-                    print("Turn Left!")
-                if cx < 120 and cx > 50:
-                    print("On Track!")
-                if cx <= 50:
-                    print("Turn Right")
+        # ret,thresh = cv2.threshold(blur,60,255,cv2.THRESH_BINARY_INV)
+        # im3,contours,hierarchy = cv2.findContours(thresh.copy(), 1, cv2.CHAIN_APPROX_NONE)
+        # if len(contours) > 0:
+        #     c = max(contours, key=cv2.contourArea)
+        #     area = int(cv2.contourArea(c))
+        #     M = cv2.moments(c)
+        #     cx = int(M['m10']/M['m00'])
+        #     cy = int(M['m01']/M['m00'])
+        #     if area > 300 and cy > 100 and cx > 140 and cx < 180:
+        #         cv2.line(img2,(cx,0),(cx,720),(255,0,0),1)
+        #         cv2.line(img2,(0,cy),(1280,cy),(255,0,0),1)
+        #         cv2.drawContours(img2, contours, -1, (0,255,0), 1)
+        #         if cx >= 120:
+        #             print("Turn Left!")
+        #         if cx < 120 and cx > 50:
+        #             print("On Track!")
+        #         if cx <= 50:
+        #             print("Turn Right")
 
-            self.line_image_pub.publish(self.bridge.cv2_to_imgmsg(img2, "bgr8"))
+        self.line_image_pub.publish(self.bridge.cv2_to_imgmsg(img2, "bgr8"))
                 
         
 
