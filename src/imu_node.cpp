@@ -153,7 +153,9 @@ int main(int argc, char **argv)
             
 
             output = kp * error + integral_final + kd * derivative_term;
-            
+            if(abs(error) < 0.02)
+                output = 0;
+
             geometry_msgs::Twist twist;
             twist.angular.z = -output;
             twist_pub.publish(twist);
