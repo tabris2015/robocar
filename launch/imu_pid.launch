@@ -1,0 +1,7 @@
+<launch>
+    <node pkg="robocar" type="imu_node" name="imu_node" output="screen">
+        <param name="calibration_file_path" value="$(find robocar)/config"/>
+        <param name="calibration_file_name" value="RTIMULib" />
+        <param name="frame_id" value="imu"/>
+    </node>
+</launch>
