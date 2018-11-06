@@ -63,7 +63,7 @@ class CubosDetector:
         # model_path = pack_path + '/scripts/simple2'
         
         # get ros params
-        self.img_topic = rospy.get_param('img_topic', default='/webcam/image_raw/compressed')
+        self.img_topic = rospy.get_param('img_topic', default='/raspicam_node/image/compressed')
         print("-------------------")
         print(self.img_topic)
         print("-------------------")
