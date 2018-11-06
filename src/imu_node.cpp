@@ -141,6 +141,9 @@ int main(int argc, char **argv)
             ROS_INFO_STREAM("yaw: " << yaw << " error: " << error);
             
             integral_term += error;
+            float i_wu = 10.0;
+            if(integral_term > i_wu) integral_term = i_wu;
+            if(integral_term < -i_wu) integral_term = -i_wu;
 
             float derivative_term = (yaw - last_yaw);
             
@@ -148,10 +151,6 @@ int main(int argc, char **argv)
             
             float integral_final = integral_term * ki;
             
-            if(integral_final > 10.0) integral_final = 10.0;
-            if(integral_final < -10.0) integral_final = -10.0;
-            
-
             output = kp * error + integral_final + kd * derivative_term;
             if(abs(output) < 0.01)
                 output = 0;
