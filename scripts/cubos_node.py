@@ -56,6 +56,8 @@ class CubosDetector:
     linear = 0
     angular_joy = 0
 
+    current_color = ''
+
     def __init__(self, folder):
         rospack = rospkg.RosPack()
         pack_path = rospack.get_path('robocar')
@@ -68,8 +70,13 @@ class CubosDetector:
         print("-------------------")
         self.output_topic = rospy.get_param('output_topic', default='/cmd_vel')
         self.feedback_topic = rospy.get_param('feedback_topic', default='/real_twist')
-        self.lowerBound=np.array([33,80,40])
-        self.upperBound=np.array([102,255,255])
+        self.lowerGreen=np.array([40,80,40])
+        self.upperGreen=np.array([80,255,255])
+
+        self.colors_dic = { "g":([40,80,40],[80,255,255]),
+                            "b":([95,80,40],[120,255,255]),
+                            "r1":([0,80,40],[10,255,255]),
+                            "r2":([160,80,40],[180,255,255]),}
         self.bridge = CvBridge()
 
         # self.graph = tf.get_default_graph()
@@ -93,65 +100,71 @@ class CubosDetector:
         img = cv2.imdecode(np.fromstring(img.data, np.uint8),cv2.IMREAD_COLOR)
         
         imgHSV= cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
-        mask=cv2.inRange(imgHSV,self.lowerBound,self.upperBound)
-        
-        kernelOpen=np.ones((6,6))
-        kernelClose=np.ones((20,20))
-        maskOpen=cv2.morphologyEx(mask,cv2.MORPH_OPEN,kernelOpen)
-        maskClose=cv2.morphologyEx(maskOpen,cv2.MORPH_CLOSE,kernelClose)
+        # detectar los 3 colores
 
-        maskFinal = maskClose
+        for color, bounds in self.colors_dic.iteritems():
 
-        im2, conts, hierarchy = cv2.findContours(maskFinal.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+            mask=cv2.inRange(imgHSV,bounds[0],bounds[1])
+            
+            self.current_color = color[0]
+            
+            kernelOpen=np.ones((6,6))
+            kernelClose=np.ones((20,20))
+            maskOpen=cv2.morphologyEx(mask,cv2.MORPH_OPEN,kernelOpen)
+            maskClose=cv2.morphologyEx(maskOpen,cv2.MORPH_CLOSE,kernelClose)
+
+            maskFinal = maskClose
+
+            im2, conts, hierarchy = cv2.findContours(maskFinal.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+            
+            ctrl_msg = Twist()
+            if not conts:
+                ctrl_msg.angular.z = 0
+                ctrl_msg.linear.x = 0
+                self.output_pub.publish(ctrl_msg)
+                print("no conts!")
+                return
+
+            cv2.drawContours(img,conts,-1,(255,0,0),3)
+            c = max(conts, key = cv2.contourArea)
+            
+            M = cv2.moments(c)
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
         
-        ctrl_msg = Twist()
-        if not conts:
-            ctrl_msg.angular.z = 0
-            ctrl_msg.linear.x = 0
+            # draw the contour and center of the shape on the image
+            cv2.drawContours(img, [c], -1, (0, 255, 0), 2)
+            cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
+
+            area = int(cv2.contourArea(c))
+            if area < 220:
+                ctrl_msg.angular.z = 0
+                ctrl_msg.linear.x = 0
+                self.output_pub.publish(ctrl_msg)
+                return
+
+            area_txt = str(area)
+            
+            self.deviation = int(160 - cX)
+
+            deviation_txt = str(self.deviation)
+            cv2.putText(img, area_txt, (cX - 20, cY - 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            cv2.putText(img, deviation_txt, (cX - 20, cY + 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+        
+
+            x,y,w,h = cv2.boundingRect(c)
+            # draw the book contour (in green)
+            cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+            self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
+            
+            error = self.deviation * 0.003
+            # calculo la salida
+            
+            ctrl_msg.angular.z = error
+            ctrl_msg.linear.x = 0.1
             self.output_pub.publish(ctrl_msg)
-            print("no conts!")
-            return
-
-        cv2.drawContours(img,conts,-1,(255,0,0),3)
-        c = max(conts, key = cv2.contourArea)
-        
-        M = cv2.moments(c)
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
-    
-        # draw the contour and center of the shape on the image
-        cv2.drawContours(img, [c], -1, (0, 255, 0), 2)
-        cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
-
-        area = int(cv2.contourArea(c))
-        if area < 220:
-            ctrl_msg.angular.z = 0
-            ctrl_msg.linear.x = 0
-            self.output_pub.publish(ctrl_msg)
-            return
-
-        area_txt = str(area)
-        
-        self.deviation = int(160 - cX)
-
-        deviation_txt = str(self.deviation)
-        cv2.putText(img, area_txt, (cX - 20, cY - 20),
-		        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-        cv2.putText(img, deviation_txt, (cX - 20, cY + 20),
-		        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
-    
-
-        x,y,w,h = cv2.boundingRect(c)
-        # draw the book contour (in green)
-        cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
-        self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
-        
-        error = self.deviation * 0.003
-        # calculo la salida
-        
-        ctrl_msg.angular.z = error
-        ctrl_msg.linear.x = 0.1
-        self.output_pub.publish(ctrl_msg)
 
 
     def feedbackCallback(self, twist):
