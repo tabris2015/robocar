@@ -123,6 +123,7 @@ class CubosDetector:
         # lee la imagen y la preprocesa
         img = cv2.imdecode(np.fromstring(img.data, np.uint8),cv2.IMREAD_COLOR)
         ## para deteccion de linea
+        img2 = img.copy()
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         imgHSV= cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
@@ -297,9 +298,9 @@ class CubosDetector:
             cx = int(M['m10']/M['m00'])
             cy = int(M['m01']/M['m00'])
             if area > 300 and cy > 100 and cx > 140 and cx < 180:
-                cv2.line(img,(cx,0),(cx,720),(255,0,0),1)
-                cv2.line(img,(0,cy),(1280,cy),(255,0,0),1)
-                cv2.drawContours(img, contours, -1, (0,255,0), 1)
+                cv2.line(img2,(cx,0),(cx,720),(255,0,0),1)
+                cv2.line(img2,(0,cy),(1280,cy),(255,0,0),1)
+                cv2.drawContours(img2, contours, -1, (0,255,0), 1)
                 if cx >= 120:
                     print("Turn Left!")
                 if cx < 120 and cx > 50:
@@ -307,7 +308,7 @@ class CubosDetector:
                 if cx <= 50:
                     print("Turn Right")
 
-            self.line_image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
+            self.line_image_pub.publish(self.bridge.cv2_to_imgmsg(img2, "bgr8"))
                 
         
 
