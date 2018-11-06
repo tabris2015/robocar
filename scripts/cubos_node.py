@@ -98,7 +98,7 @@ class CubosDetector:
         # image subscriber for the predictor
         self.image_sub = rospy.Subscriber(self.img_topic, CompressedImage, self.imCallback, queue_size=1)
         
-        self.feedback_sub = rospy.Subscriber(self.feedback_topic, Twist, queue_size=1)
+        # self.feedback_sub = rospy.Subscriber(self.feedback_topic, Twist, queue_size=1)
         
         # float32 publisher for output 
         self.output_pub = rospy.Publisher(self.output_topic, Twist, queue_size=1)
@@ -193,13 +193,16 @@ class CubosDetector:
                 self.first = False
 
             col = max(self.color_areas.iteritems(), key=operator.itemgetter(1))[0]
+            print("siguiendo: ", col)
             self.current_color = col
             error = self.color_deviations[col] * 0.003
 
             ctrl_msg.angular.z = error
             ctrl_msg.linear.x = 0.1
             self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
+
         else:
+
             if (self.current_color == "green") and 
                 (abs(self.color_deviations["green"]) < 50) and 
                 (self.color_last_center["green"][1] > 200):
@@ -211,6 +214,7 @@ class CubosDetector:
                 print("conseguido cubo AZUL!")
 
             self.first = True
+
         self.output_pub.publish(ctrl_msg)
         
 
@@ -224,8 +228,6 @@ class CubosDetector:
         ctrl_msg.angular.z = error
         self.output_pub.publish(ctrl_msg)
         # publico setpoint
-
-        pass
 
 def main(args):
     rospy.init_node('cubos_node', anonymous=True)
