@@ -119,7 +119,11 @@ class CubosDetector:
         cv2.drawContours(img, [c], -1, (0, 255, 0), 2)
         cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
 
-        area_txt = str(cv2.contourArea(c))
+        area = int(cv2.contourArea(c))
+        if area < 220:
+            return
+
+        area_txt = str(area)
         
         self.deviation = int(160 - cX)
 
@@ -140,6 +144,7 @@ class CubosDetector:
         
         ctrl_msg = Twist()
         ctrl_msg.angular.z = error
+        ctrl_msg.linear.x = 0.1
         self.output_pub.publish(ctrl_msg)
 
 
