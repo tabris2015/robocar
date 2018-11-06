@@ -121,7 +121,7 @@ class CubosDetector:
 
         area_txt = str(cv2.contourArea(c))
         
-        self.deviation = int(cX - 160)
+        self.deviation = int(160 - cX)
 
         deviation_txt = str(self.deviation)
         cv2.putText(img, area_txt, (cX - 20, cY - 20),
@@ -135,8 +135,9 @@ class CubosDetector:
         cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
         self.image_pub.publish(self.bridge.cv2_to_imgmsg(img, "bgr8"))
         
-        error = self.deviation * 0.001
+        error = self.deviation * 0.003
         # calculo la salida
+        
         ctrl_msg = Twist()
         ctrl_msg.angular.z = error
         self.output_pub.publish(ctrl_msg)
