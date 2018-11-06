@@ -151,8 +151,8 @@ int main(int argc, char **argv)
             float integral_final = integral_term * ki;
             
             output = kp * error + integral_final + kd * derivative_term;
-            if(abs(output) < 0.01)
-                output = 0;
+            // if(abs(output) < 0.01)
+            //     output = 0;
 
             ROS_INFO_STREAM("i: " << yaw << " e: " << error << " o: " << output);
             
