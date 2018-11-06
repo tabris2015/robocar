@@ -102,6 +102,8 @@ class CubosDetector:
     def imCallback(self, img):
         """ este calback lee la imagen de la camara, la preprocesa y obtiene 
         una prediccion para el comando de control del robot"""
+        self.color_areas = {}
+        self.color_deviations = {}
         kernelClose=np.ones((20,20))
         kernelOpen=np.ones((6,6))
 
