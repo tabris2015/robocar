@@ -24,7 +24,7 @@ float last_yaw;
 
 float integral_term = 0;
 
-float kp=0.8, ki=0.01, kd=0.3;
+float kp=0.3, ki=0.001, kd=0.2;
 
 //
 // MotorDriverI2c * motors_ptr;
