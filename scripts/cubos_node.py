@@ -51,7 +51,7 @@ class CubosDetector:
 	([25, 146, 190], [62, 174, 250]),   # yellow
 	([103, 86, 65], [145, 133, 128])    # gray
     ]
-    
+
     dim = (224, 224)
     deviation = 0
     linear = 0
@@ -184,7 +184,7 @@ class CubosDetector:
                 # self.current_color = "blue"
                 self.color_last_center['blue'] = (cX, cY)
 
-        print(len(self.color_areas.keys()), "objetos en escena")
+        # print(len(self.color_areas.keys()), "objetos en escena")
         
 
         if self.color_areas:
@@ -202,12 +202,12 @@ class CubosDetector:
         else:
             if (self.current_color == "green") and 
                 (abs(self.color_deviations["green"]) < 50) and 
-                (self.color_last_center["green"][1] > 220):
+                (self.color_last_center["green"][1] > 200):
                 print("conseguido cubo VERDE!")
 
             elif (self.current_color == "blue") and 
                 (abs(self.color_deviations["blue"]) < 50) and 
-                (self.color_last_center["blue"][1] > 220):
+                (self.color_last_center["blue"][1] > 200):
                 print("conseguido cubo AZUL!")
 
             self.first = True
