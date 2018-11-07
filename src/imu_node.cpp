@@ -15,6 +15,8 @@
 #define MOTORS_ADD 0x0f
 static const double G_TO_MPSS = 9.80665;
 
+float absolute_yaw;
+
 float error;
 float last_error;
 float output;
@@ -26,15 +28,25 @@ float integral_term = 0;
 
 float kp=1, ki=0, kd=0;
 
+float delta_angle;
+
 //
 // MotorDriverI2c * motors_ptr;
 // prototipos
 void angleCallback(const std_msgs::Float32::ConstPtr &angle)
 {
     // calcular error y salida
-    setpoint = angle->data;
+    delta_angle = angle->data;
 }
 // 
+
+ros::Publisher angle_pub;
+void timerCallback(const ros::TimerEvent &event)
+{
+    std_msgs::Float32 msg;
+    msg.data = absolute_yaw;
+    angle_pub.publish(msg);
+}
 
 
 int main(int argc, char **argv)
@@ -73,6 +85,9 @@ int main(int argc, char **argv)
     ros::Publisher imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 1);
     ros::Publisher twist_pub = nh.advertise<geometry_msgs::Twist>("/angle_cmd_vel", 1);
     
+    angle_pub = nh.advertise<std_msgs::Float32>("/angle_real", 1);
+    
+
     ros::Subscriber setpoint_sub = nh.subscribe("/angle", 100, angleCallback);
 
     // Load the RTIMULib.ini config file
@@ -104,6 +119,13 @@ int main(int argc, char **argv)
 
     // MotorDriverI2c motors(settings, MOTORS_ADD);
     // motors_ptr = &motors;
+    // for angle pub
+    
+    
+
+
+    auto angle_timer = nh.createTimer(ros::Duration(0.25), timerCallback);
+
 
     while (ros::ok())
     {
@@ -126,6 +148,8 @@ int main(int argc, char **argv)
             imu_msg.linear_acceleration.x = imu_data.accel.x() * G_TO_MPSS;
             imu_msg.linear_acceleration.y = imu_data.accel.y() * G_TO_MPSS;
             imu_msg.linear_acceleration.z = imu_data.accel.z() * G_TO_MPSS;
+
+
             float yaw   = atan2(
                             2.0 * (
                                     imu_data.fusionQPose.z() * imu_data.fusionQPose.scalar() + 
@@ -136,11 +160,42 @@ int main(int argc, char **argv)
                                     imu_data.fusionQPose.x() * imu_data.fusionQPose.x()
                                 ));
 
-            error = setpoint - yaw;
+            absolute_yaw = yaw;
 
+            float setpoint = yaw + delta_angle;
+            setpoint = atan2f(sinf(setpoint), cosf(setpoint)); // asegurar entre -pi y pi
+
+            if(yaw > 0)
+            {
+                float yaw_pi = M_PI - yaw;
+                if((yaw_pi < M_PI_2) && ((setpoint >= -M_PI) && (setpoint < -M_PI_2))) // yaw 3er cuadrante
+                {
+                    float setpoint_pi = M_PI + setpoint;
+                    error = yaw_pi + setpoint_pi;
+                }
+                else
+                {
+                    error = setpoint - yaw;
+
+                }
+            }
+            else
+            {
+                float yaw_pi = M_PI + yaw;
+                if((yaw_pi < M_PI_2) && ((setpoint >= M_PI_2) && (setpoint < M_PI))) // yaw 3er cuadrante
+                {
+                    float setpoint_pi = M_PI - setpoint;
+                    error = yaw_pi + setpoint_pi;
+                }
+                else
+                {
+                    error = setpoint - yaw;
+
+                }
+            }
             
             integral_term += error;
-            float i_wu = 10.0;
+            float i_wu = 3.0;
             if(integral_term > i_wu) integral_term = i_wu;
             if(integral_term < -i_wu) integral_term = -i_wu;
 
