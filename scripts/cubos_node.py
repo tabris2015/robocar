@@ -10,7 +10,7 @@ import numpy as np
 import rospy
 import cv2
 import message_filters
-from std_msgs.msg import String, Float32, Bool
+from std_msgs.msg import String, Float32, Bool, Empty
 from sensor_msgs.msg import Image, Range, CompressedImage, Joy
 from geometry_msgs.msg import Twist, TwistStamped
 from cv_bridge import CvBridge, CvBridgeError
@@ -106,6 +106,7 @@ class CubosDetector:
         self.line_image_pub = rospy.Publisher("/line_image", Image, queue_size=1)
         self.cube_pub = rospy.Publisher("/cube_detected", Bool, queue_size=1)
         self.cube_color_pub = rospy.Publisher("/cube_color", String, queue_size=1)
+        # self.turn_complete_pub = rospy.Publisher("/turn_complete", Empty, queue_size=10)
 
     #this callback executes when the two subscribers sync
     def imCallback(self, img):

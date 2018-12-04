@@ -4,7 +4,8 @@
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/Twist.h> // para el control
 #include <std_msgs/Float32.h>       // para el setpoint
-
+#include <std_msgs/Empty.h>
+#include <vector>
 // #include "motor_driver_i2c.h"
 
 #include "tf/transform_datatypes.h"
@@ -30,13 +31,25 @@ float kp=1, ki=0, kd=0;
 
 float delta_angle;
 
+bool complete_sent = false;
+
+std::vector<float> errors;
+
+int err_idx=0;
+
+float error_avg;
+
+
 //
 // MotorDriverI2c * motors_ptr;
 // prototipos
 void angleCallback(const std_msgs::Float32::ConstPtr &angle)
 {
+    float yaw = 0;
     // calcular error y salida
     delta_angle = angle->data;
+    setpoint = yaw + delta_angle;
+    complete_sent = false;
 }
 // 
 
@@ -52,6 +65,7 @@ void timerCallback(const ros::TimerEvent &event)
 int main(int argc, char **argv)
 {
     // for transforming to ypr
+    errors.reserve(10);
     double roll, pitch, yaw;
 
     ros::init(argc, argv, "imu_node");
@@ -85,6 +99,9 @@ int main(int argc, char **argv)
     ros::Publisher imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 1);
     ros::Publisher twist_pub = nh.advertise<geometry_msgs::Twist>("/angle_cmd_vel", 1);
     
+    ros::Publisher turn_complete_pub = nh.advertise<std_msgs::Empty>("/turn_complete", 10);
+    
+
     angle_pub = nh.advertise<std_msgs::Float32>("/angle_real", 1);
     
 
@@ -162,7 +179,8 @@ int main(int argc, char **argv)
 
             absolute_yaw = yaw;
 
-            float setpoint = yaw + delta_angle;
+            
+
             setpoint = atan2f(sinf(setpoint), cosf(setpoint)); // asegurar entre -pi y pi
 
             if(yaw > 0)
@@ -193,7 +211,27 @@ int main(int argc, char **argv)
 
                 }
             }
-            
+
+            errors[err_idx % 10] = error;
+            float accum = 0;
+            for(auto i: errors)
+            {
+                accum += 1;
+            }
+
+            error_avg = accum / 10;
+
+            if(accum < 0.01)
+            {
+                // std
+                if(!complete_sent)
+                {
+                    std_msgs::Empty m;
+                    turn_complete_pub.publish(m);
+                    ROS_INFO_STREAM("completado!");
+                    complete_sent = true;
+                }
+            }
             integral_term += error;
             float i_wu = 3.0;
             if(integral_term > i_wu) integral_term = i_wu;
