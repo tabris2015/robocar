@@ -15,6 +15,7 @@ class Pilot
   private:
     // data
     bool manual_;
+
     // topics from param server
     std::string neural_topic_;
     std::string obstacle_topic_;
@@ -110,14 +111,24 @@ void Pilot::ObstacleCallback(const std_msgs::Float32::ConstPtr &acceleration)
 
 void Pilot::JoyTwistCallback(const geometry_msgs::Twist::ConstPtr &joy_twist)
 {
-    manual_ = true;
-    manual_twist_msg_.linear.x = joy_twist->linear.x;
-    manual_twist_msg_.angular.z = joy_twist->angular.z;
+    // solo si hay un cambio
+    if(manual_twist_msg_.linear.x != joy_twist->linear.x)
+    {
+        manual_twist_msg_.linear.x = joy_twist->linear.x;
+        manual_ = true;
+    }
+    
+    if(manual_twist_msg_.angular.z != joy_twist->angular.z)
+    {
+        manual_twist_msg_.angular.z = joy_twist->angular.z;
+        manual_ = true;
+    }
+    
 }
 
 void Pilot::TimerCallback(const ros::TimerEvent &event)
 {
-    if(abs(manual_twist_msg_.linear.x) > 0.01 || abs(manual_twist_msg_.angular.z) > 0.01)
+    if(manual_)
     {
         twist_cmd_pub_.publish(manual_twist_msg_);
         manual_ = false;
@@ -125,7 +136,7 @@ void Pilot::TimerCallback(const ros::TimerEvent &event)
     else
     {
         twist_cmd_pub_.publish(twist_msg_);
-        manual_ = false;
+        // manual_ = false;
     }
 }
 

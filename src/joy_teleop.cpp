@@ -57,7 +57,7 @@ TeleopRobocar::TeleopRobocar()
 
     nh_.param<double>("scale_angular", a_scale_, -1.32);    // -0.34
 
-    nh_.param<std::string>("output_topic", output_topic, "/cmd_vel");
+    nh_.param<std::string>("output_topic", output_topic, "/joy_cmd_vel");
 
     vel_pub_ = nh_.advertise<geometry_msgs::Twist>(output_topic, 1);
     

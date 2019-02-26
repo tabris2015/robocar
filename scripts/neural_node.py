@@ -54,30 +54,39 @@ class AutoPilot:
         model_path = pack_path + '/scripts/simple2'
         
         # get ros params
+        rospy.loginfo("cargando parametros...")
         self.img_topic = rospy.get_param('img_topic', default='/camera/image/compressed')
         self.output_topic = rospy.get_param('output_topic', default='/neural_output')
+        self.viz_topic = rospy.get_param('viz_topic', default='/neural_viz')
         self.model_name = rospy.get_param('model', default=model_path)
 
         ## cargar la red neuronal en la memoria 
         # load json and create model
+        rospy.loginfo("cargando modelo entrenado...")
         json_file = open(self.model_name + '.json', 'r')
         loaded_model_json = json_file.read()
         json_file.close()
         self.model = model_from_json(loaded_model_json)
 
+        rospy.loginfo("cargando pesos del modelo...")    
         # load weights into new model
         self.model.load_weights(self.model_name + "_best.h5")
-        print("Loaded model from disk") 
         self.model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
         self.model.summary()
         self.graph = tf.get_default_graph()
 
-        print('creando subs y pubs...')
+        rospy.loginfo('creando subs y pubs...')
         # image subscriber for the predictor
         self.image_sub = rospy.Subscriber(self.img_topic, CompressedImage, self.imCallback, queue_size=1)
         
         # float32 publisher for output 
         self.output_pub = rospy.Publisher(self.output_topic, Float32, queue_size=1)
+
+        # image publisher for debug an visualization
+        self.viz_pub = rospy.Publisher(self.viz_topic, Image, queue_size=1)
+
+        # cv bridge instance
+        self.bridge = CvBridge()
     
     #this callback executes when the two subscribers sync
     def imCallback(self, img):
@@ -85,19 +94,21 @@ class AutoPilot:
         una prediccion para el comando de control del robot"""
 
         # lee la imagen y la preprocesa
-        np_image = cv2.imdecode(np.fromstring(img.data, np.uint8),cv2.IMREAD_COLOR)
-        np_image = cv2.resize(np_image, self.dim, interpolation = cv2.INTER_AREA)
-        #print (np_image.shape)
-        np_image = (2 * (np_image / 255.0 - 0.5))
+        raw_image = cv2.imdecode(np.fromstring(img.data, np.uint8),cv2.IMREAD_COLOR)
+        raw_image = cv2.resize(raw_image, self.dim, interpolation = cv2.INTER_AREA)
+        # rospy.loginfo (np_image.shape)
+        np_image = (2 * (raw_image / 255.0 - 0.5))
         x = np_image.reshape((1,) + np_image.shape)  # this is a Numpy array with shape (1, h,w, c)
-        #print (x.shape)
+        #rospy.loginfo (x.shape)
         # obtiene la prediccion de la red neuronal
         angular = 0.0
         with self.graph.as_default():
             angular = self.model.predict(x, batch_size=1, verbose=0)
 
-        angular = np.asscalar(angular.flatten())
-        #print ("prediccion: ", angular)
+        angular = -1 * np.asscalar(angular.flatten())
+        if angular > 0.0:
+            angular *= 2
+        # rospy.loginfo ("prediccion: {}".format(angular))
         # crea el mensaje para el control del carro y publica 
         # msg = Twist()
         
@@ -106,17 +117,28 @@ class AutoPilot:
 
         output_msg = Float32()
         output_msg.data = angular
+        
+        angle = int(angular * 90)
+        # augment important data to visualization
+        cv2.ellipse(raw_image, (self.dim[0]/2, self.dim[1] -5), (10, 30), angle, 0, 360, 127, -1)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        cv2.putText(raw_image, '{:.2f}'.format(angular),(10,30), font, 1,(255,255,255),2,cv2.LINE_AA)
         self.output_pub.publish(output_msg)
+
+        self.viz_pub.publish(self.bridge.cv2_to_imgmsg(raw_image, 'bgr8'))
+
 
         
 def main(args):
+    rospy.loginfo("iniciando nodo neuronal")
     rospy.init_node('neural_node', anonymous=True)
+    
     stamper = AutoPilot(None)
 
     try:
         rospy.spin()
     except KeyboardInterrupt:
-        print("shutting down")
+        rospy.loginfo("shutting down")
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':

@@ -52,7 +52,7 @@ class ObstacleDetector:
         acceleration = 0 if (acceleration < (self.stop_distance + 0.03)) and (acceleration > (self.stop_distance - 0.01)) else acceleration
 
         out_msg = Float32()
-        out_msg.data = acceleration
+        out_msg.data = acceleration * 0.75
         self.output_pub.publish(out_msg)
         
         # if distance is less than 15 cm
